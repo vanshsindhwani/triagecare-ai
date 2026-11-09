@@ -33,6 +33,7 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
       fee: FEE,
       paid: true,
       status: "Booked",
+      bookedAt: "Today, " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     setAppointments([...appointments, newAppointment]);
     alert("Payment successful (test mode). Your token is " + newAppointment.id);

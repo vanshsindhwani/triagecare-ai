@@ -10,6 +10,75 @@ export const defaultDepartments = [
   { name: "General Medicine", doctor: "Dr. Suresh Gupta", words: ["fever", "cold", "weakness", "fatigue", "body ache"] },
 ];
 
+export const defaultAppointments = [
+  {
+    id: "TC-1001",
+    patient: "Aarav Sharma",
+    problem: "Severe pulsating headache on left side with dizziness and light sensitivity",
+    department: "Neurology",
+    doctor: "Dr. Sandeep Kapoor",
+    priority: "High",
+    slot: "10:20",
+    fee: 300,
+    paid: true,
+    status: "In Progress",
+    bookedAt: "Today, 09:30 AM",
+  },
+  {
+    id: "TC-1002",
+    patient: "Priya Patel",
+    problem: "Numbness and tingling in hands and chronic migraine",
+    department: "Neurology",
+    doctor: "Dr. Sandeep Kapoor",
+    priority: "Medium",
+    slot: "11:00",
+    fee: 300,
+    paid: true,
+    status: "Booked",
+    bookedAt: "Today, 10:00 AM",
+  },
+  {
+    id: "TC-1003",
+    patient: "Rajesh Kumar",
+    problem: "Chest tightness, sudden palpitations and mild shortness of breath",
+    department: "Cardiology",
+    doctor: "Dr. Rohit Mehta",
+    priority: "High",
+    slot: "10:40",
+    fee: 300,
+    paid: true,
+    status: "Booked",
+    bookedAt: "Today, 09:45 AM",
+  },
+  {
+    id: "TC-1004",
+    patient: "Simran Kaur",
+    problem: "Persistent dry cough, wheezing and nocturnal breathlessness",
+    department: "Pulmonology",
+    doctor: "Dr. Anita Verma",
+    priority: "Medium",
+    slot: "11:40",
+    fee: 300,
+    paid: true,
+    status: "Completed",
+    bookedAt: "Yesterday, 04:15 PM",
+  },
+  {
+    id: "TC-1005",
+    patient: "Amit Verma",
+    problem: "Severe lower back pain after lifting weights with knee stiffness",
+    department: "Orthopedics",
+    doctor: "Dr. Vikram Singh",
+    priority: "Medium",
+    slot: "12:00",
+    fee: 300,
+    paid: true,
+    status: "Booked",
+    bookedAt: "Today, 10:15 AM",
+  },
+];
+
+
 // simple version of the triage. Later we can replace this with a call to the
 // Python (Sentence-BERT) service, e.g. fetch("http://localhost:8000/triage", ...)
 export function findDepartment(text, departments) {
@@ -42,7 +111,7 @@ export function load(key, fallback) {
   try {
     const value = JSON.parse(localStorage.getItem(key));
     return value === null ? fallback : value;
-  } catch (e) {
+  } catch {
     return fallback;
   }
 }

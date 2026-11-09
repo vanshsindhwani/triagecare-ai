@@ -1,46 +1,141 @@
 import { useState } from "react";
 
-function StaffDashboard({ appointments, setAppointments, departments }) {
-  const [filter, setFilter] = useState("All");
+function StaffDashboard({ user, appointments, setAppointments }) {
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const shown = appointments.filter((a) => filter === "All" || a.department === filter);
-  const highCount = appointments.filter((a) => a.priority === "High").length;
-  const completed = appointments.filter((a) => a.status === "Completed").length;
+  const doctorDept = user?.department;
 
-  function updateStatus(id, status) {
-    setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: status } : a)));
+  // STRICT FILTER: Doctor only sees patients assigned to their department
+  const doctorAppointments = doctorDept
+    ? appointments.filter((a) => a.department === doctorDept)
+    : appointments;
+
+  const filteredAppointments = doctorAppointments.filter((a) => {
+    const matchesStatus = statusFilter === "All" || a.status === statusFilter;
+    const matchesSearch =
+      searchQuery.trim() === "" ||
+      a.patient.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.problem.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const highCount = doctorAppointments.filter((a) => a.priority === "High").length;
+  const completedCount = doctorAppointments.filter((a) => a.status === "Completed").length;
+
+  function updateStatus(id, newStatus) {
+    setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: newStatus } : a)));
   }
 
   return (
     <div>
+      <div className="card" style={{ background: "#f0fdf4", borderColor: "#bbf7d0", marginBottom: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+          <div>
+            <h3 style={{ margin: "0 0 4px", color: "#166534", borderBottom: "none", paddingBottom: 0 }}>
+              👨‍⚕️ {user?.name || "Doctor"} — {doctorDept ? `${doctorDept} Specialist` : "Doctor Portal"}
+            </h3>
+            <p style={{ margin: 0, fontSize: "13px", color: "#15803d" }}>
+              🔒 <b>Patient Privacy Active:</b> You are viewing patient records triaged exclusively to <b>{doctorDept || "your specialty"}</b>.
+            </p>
+          </div>
+          <span style={{ background: "#dcfce7", color: "#166534", padding: "6px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: "600" }}>
+            Dept: {doctorDept}
+          </span>
+        </div>
+      </div>
+
       <div className="stats">
-        <div className="stat"><h1>{appointments.length}</h1>Total Requests</div>
-        <div className="stat"><h1>{highCount}</h1>High Priority</div>
-        <div className="stat"><h1>{completed}</h1>Completed</div>
+        <div className="stat">
+          <h1>{doctorAppointments.length}</h1>
+          My {doctorDept ? `${doctorDept} ` : ""}Patients
+        </div>
+        <div className="stat">
+          <h1 style={{ color: highCount > 0 ? "#dc2626" : undefined }}>{highCount}</h1>
+          High Priority
+        </div>
+        <div className="stat">
+          <h1 style={{ color: "#15803d" }}>{completedCount}</h1>
+          Consulted
+        </div>
       </div>
 
       <div className="card">
-        <h3>Patient Requests</h3>
-        <label>Filter by department</label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option>All</option>
-          {departments.map((d) => <option key={d.name}>{d.name}</option>)}
-        </select>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
+          <h3 style={{ margin: 0, paddingBottom: 0, borderBottom: "none" }}>Assigned Patient Roster</h3>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <input
+              type="text"
+              placeholder="Search patient, token, symptoms..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ margin: 0, width: "230px", padding: "8px 10px" }}
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ margin: 0, width: "140px", padding: "8px 10px" }}
+            >
+              <option value="All">All Statuses</option>
+              <option value="Booked">Booked</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
 
-        {shown.length === 0 ? <p className="muted">No requests found.</p> : (
+        {filteredAppointments.length === 0 ? (
+          <p className="muted" style={{ textAlign: "center", padding: "20px 0" }}>
+            {doctorAppointments.length === 0
+              ? `No patients currently registered for ${doctorDept}.`
+              : "No patient matches your search or status filter."}
+          </p>
+        ) : (
           <table>
             <thead>
-              <tr><th>Token</th><th>Patient</th><th>Problem</th><th>Department</th><th>Slot</th><th>Priority</th><th>Status</th></tr>
+              <tr>
+                <th>Token</th>
+                <th>Patient</th>
+                <th>Reported Symptoms</th>
+                <th>Slot</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
             </thead>
             <tbody>
-              {shown.map((a) => (
+              {filteredAppointments.map((a) => (
                 <tr key={a.id}>
-                  <td>{a.id}</td><td>{a.patient}</td><td>{a.problem}</td><td>{a.department}</td><td>{a.slot}</td>
-                  <td className={a.priority}>{a.priority}</td>
+                  <td><b>{a.id}</b></td>
+                  <td><b>{a.patient}</b></td>
+                  <td style={{ maxWidth: "280px" }}>{a.problem}</td>
+                  <td>{a.slot}</td>
                   <td>
-                    <select value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
-                      <option>Booked</option><option>In Progress</option><option>Completed</option>
+                    <span className={a.priority}>{a.priority}</span>
+                  </td>
+                  <td>
+                    <select
+                      value={a.status}
+                      onChange={(e) => updateStatus(a.id, e.target.value)}
+                      style={{ padding: "4px 8px" }}
+                    >
+                      <option value="Booked">Booked</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
                     </select>
+                  </td>
+                  <td>
+                    {a.status !== "Completed" ? (
+                      <button
+                        onClick={() => updateStatus(a.id, "Completed")}
+                        style={{ padding: "6px 12px", fontSize: "12px", background: "#0b5d56" }}
+                      >
+                        Complete
+                      </button>
+                    ) : (
+                      <span className="muted" style={{ fontSize: "12px" }}>✓ Done</span>
+                    )}
                   </td>
                 </tr>
               ))}
