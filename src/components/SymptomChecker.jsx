@@ -36,7 +36,7 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
       bookedAt: "Today, " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     setAppointments([...appointments, newAppointment]);
-    alert("Payment successful (test mode). Your token is " + newAppointment.id);
+    alert("Payment successful! Your appointment has been booked. Token: " + newAppointment.id);
     setText("");
     setResult(null);
     setSlot("");
@@ -71,8 +71,8 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
               ))}
             </div>
 
-            <b>Payment (test mode) - Fee: Rs. {FEE}</b>
-            <input value={card} onChange={(e) => setCard(e.target.value)} placeholder="Test card number" />
+            <b>Consultation Fee: Rs. {FEE}</b>
+            <input value={card} onChange={(e) => setCard(e.target.value)} placeholder="Card number or UPI ID" />
             <button disabled={slot === "" || card.trim() === ""} onClick={payAndBook}>Pay & Book Appointment</button>
           </div>
         )}

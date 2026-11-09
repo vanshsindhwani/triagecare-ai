@@ -3,14 +3,16 @@ import Login from "./pages/Login";
 import PatientDashboard from "./pages/PatientDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import { defaultDepartments, defaultAppointments, load, save } from "./data";
+import { defaultDepartments, load, save } from "./data";
 
 function App() {
   const [user, setUser] = useState(null);
   const [departments, setDepartments] = useState(load("departments", defaultDepartments));
   const [appointments, setAppointments] = useState(() => {
-    const saved = load("appointments", null);
-    return saved && saved.length > 0 ? saved : defaultAppointments;
+    const saved = load("appointments", []);
+    return (saved || []).filter(
+      (a) => !["Aarav Sharma", "Priya Patel", "Rajesh Kumar", "Simran Kaur", "Amit Verma"].includes(a.patient)
+    );
   });
   const [logs, setLogs] = useState(load("logs", []));
   const [reminders, setReminders] = useState(load("reminders", []));

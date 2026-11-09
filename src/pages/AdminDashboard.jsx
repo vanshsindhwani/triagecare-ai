@@ -70,7 +70,7 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
         </div>
         <div className="stat">
           <h1 style={{ color: "#0f766e" }}>Rs. {collected}</h1>
-          Revenue (Test Mode)
+          Total Revenue Collected
         </div>
       </div>
 
@@ -277,7 +277,7 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
               <div><b>Assigned Doctor:</b> {selectedBooking.doctor}</div>
               <div><b>Consultation Slot:</b> {selectedBooking.slot}</div>
               <div><b>Triage Urgency:</b> <span className={selectedBooking.priority}>{selectedBooking.priority}</span></div>
-              <div><b>Payment:</b> Rs. {selectedBooking.fee || 300} (Test mode - Paid)</div>
+              <div><b>Payment:</b> Rs. {selectedBooking.fee || 300} (Paid)</div>
               <div><b>Booking Time:</b> {selectedBooking.bookedAt || "Recent"}</div>
               <div><b>Status:</b> {selectedBooking.status}</div>
               <div style={{ marginTop: "12px", background: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
