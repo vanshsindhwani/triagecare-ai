@@ -43,8 +43,11 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
 
   function addDepartment() {
     if (name.trim() === "" || doctor.trim() === "") return;
+    const formattedDoctor = doctor.trim().match(/^(dr\.?|doctor)\s+/i)
+      ? `Dr. ${doctor.trim().replace(/^(dr\.?|doctor)\s+/i, "")}`
+      : `Dr. ${doctor.trim()}`;
     const keywords = words.split(",").map((w) => w.trim().toLowerCase()).filter((w) => w !== "");
-    const newDept = { name: name.trim(), doctor: doctor.trim(), words: keywords };
+    const newDept = { name: name.trim(), doctor: formattedDoctor, words: keywords };
     addDepartmentApi(newDept);
     setDepartments([...departments, newDept]);
     setName("");
@@ -264,19 +267,19 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Ophthalmology"
+              placeholder="Department name"
             />
             <label>Assigned Specialist Doctor</label>
             <input
               value={doctor}
               onChange={(e) => setDoctor(e.target.value)}
-              placeholder="e.g. Dr. Rajesh Gupta"
+              placeholder="Doctor full name"
             />
             <label>Keywords for Semantic Triage (comma separated)</label>
             <input
               value={words}
               onChange={(e) => setWords(e.target.value)}
-              placeholder="eye, vision, blurred, cataract, redness"
+              placeholder="Keywords separated by comma"
             />
             <button onClick={addDepartment}>Add Department</button>
           </div>
@@ -301,7 +304,7 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
           <div className="card" style={{ maxWidth: "520px", width: "100%", margin: 0 }}>
             <h3>Intake Record: {selectedBooking.id}</h3>
             <div style={{ margin: "16px 0", lineHeight: "1.8", fontSize: "14px" }}>
-              <div><b>Booked By (Patient):</b> {selectedBooking.patient}</div>
+              <div><b>Booked By (Patient):</b> {selectedBooking.patient} {selectedBooking.phone ? `(+91 ${selectedBooking.phone})` : ""}</div>
               <div><b>Department:</b> {selectedBooking.department}</div>
               <div><b>Assigned Doctor:</b> {selectedBooking.doctor}</div>
               <div><b>Consultation Slot:</b> {selectedBooking.slot}</div>

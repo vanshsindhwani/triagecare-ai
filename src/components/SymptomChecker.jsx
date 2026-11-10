@@ -9,7 +9,7 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [slot, setSlot] = useState("");
-  const [card, setCard] = useState("4111 1111 1111 1111");
+  const [card, setCard] = useState("");
 
   async function checkSymptoms() {
     if (text.trim() === "") return;
@@ -27,6 +27,7 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
     const newAppointment = {
       id: "TC-" + (1001 + appointments.length),
       patient: user.name,
+      phone: user.phone || "",
       problem: text,
       department: result.department,
       doctor: result.doctor,
@@ -51,7 +52,7 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
       <div className="card">
         <h3>Describe your problem</h3>
         <textarea rows="5" value={text} onChange={(e) => setText(e.target.value)}
-          placeholder="Example: I have chest pain and feel short of breath" />
+          placeholder="Describe your symptoms or health concern..." />
         <button onClick={checkSymptoms}>Find Department</button>
       </div>
 

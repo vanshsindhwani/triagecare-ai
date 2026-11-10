@@ -105,9 +105,13 @@ app.post("/api/departments", (req: Request, res: Response) => {
     return res.status(409).json({ error: "Department already exists" });
   }
 
+  const formattedDoc = doctor.trim().match(/^(dr\.?|doctor)\s+/i)
+    ? `Dr. ${doctor.trim().replace(/^(dr\.?|doctor)\s+/i, "")}`
+    : `Dr. ${doctor.trim()}`;
+
   const newDept = {
     name: name.trim(),
-    doctor: doctor.trim(),
+    doctor: formattedDoc,
     words: Array.isArray(words) ? words.map((w: string) => w.trim().toLowerCase()) : [],
   };
   db.departments.push(newDept);
@@ -310,10 +314,13 @@ app.delete("/api/reminders/:id", (req: Request, res: Response) => {
 async function startServer() {
   const isProduction = process.env.NODE_ENV === "production";
 
+  // Serve static assets from public folder
+  app.use(express.static(path.join(__dirname, "public")));
+
   if (!isProduction) {
     const { createServer } = await import("vite");
     const vite = await createServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, hmr: false },
       appType: "spa",
     });
     app.use(vite.middlewares);

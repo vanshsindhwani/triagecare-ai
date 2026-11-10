@@ -34,7 +34,7 @@ function Reminders({ user, reminders, setReminders }) {
       <div className="card">
         <h3>Add Reminder</h3>
         <label>What to remember</label>
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Example: Take BP medicine" />
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Medication or health task" />
         <label>Time</label>
         <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
         <button onClick={addReminder}>Add</button>
