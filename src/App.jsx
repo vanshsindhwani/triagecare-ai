@@ -4,6 +4,7 @@ import PatientDashboard from "./pages/PatientDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import { defaultDepartments, load, save } from "./data";
+import { getDepartmentsApi, getAppointmentsApi } from "./api";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -17,6 +18,16 @@ function App() {
   const [logs, setLogs] = useState(load("logs", []));
   const [reminders, setReminders] = useState(load("reminders", []));
   const lastShown = useRef("");
+
+  // Sync with backend API on initial mount
+  useEffect(() => {
+    getDepartmentsApi(defaultDepartments).then((apiDepts) => {
+      if (apiDepts && apiDepts.length > 0) setDepartments(apiDepts);
+    });
+    getAppointmentsApi({}, []).then((apiAppts) => {
+      if (apiAppts && Array.isArray(apiAppts)) setAppointments(apiAppts);
+    });
+  }, []);
 
   // save everything in localStorage whenever it changes
   useEffect(() => save("departments", departments), [departments]);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { addVitalApi } from "../api";
 
 const units = { "Blood Pressure (systolic)": "mmHg", "Blood Sugar": "mg/dL", "Weight": "kg", "Temperature": "F" };
 
@@ -13,6 +14,7 @@ function HealthTracker({ user, logs, setLogs }) {
   function addLog() {
     if (value === "") return;
     const newLog = { id: Date.now(), owner: user.name, type: type, value: value, date: new Date().toLocaleDateString() };
+    addVitalApi(newLog);
     setLogs([...logs, newLog]);
     setValue("");
   }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { findDepartment } from "../data";
+import { triageSymptomsApi, createAppointmentApi } from "../api";
 
 const slots = ["10:00", "10:20", "10:40", "11:00", "11:20", "11:40", "12:00"];
 const FEE = 300;
@@ -10,9 +11,10 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
   const [slot, setSlot] = useState("");
   const [card, setCard] = useState("4111 1111 1111 1111");
 
-  function checkSymptoms() {
+  async function checkSymptoms() {
     if (text.trim() === "") return;
-    setResult(findDepartment(text, departments));
+    const triage = await triageSymptomsApi(text, findDepartment, departments);
+    setResult(triage);
     setSlot("");
   }
 
@@ -21,7 +23,7 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
     ? appointments.filter((a) => a.department === result.department && a.status !== "Completed").map((a) => a.slot)
     : [];
 
-  function payAndBook() {
+  async function payAndBook() {
     const newAppointment = {
       id: "TC-" + (1001 + appointments.length),
       patient: user.name,
@@ -35,8 +37,10 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
       status: "Booked",
       bookedAt: "Today, " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    setAppointments([...appointments, newAppointment]);
-    alert("Payment successful! Your appointment has been booked. Token: " + newAppointment.id);
+    const saved = await createAppointmentApi(newAppointment);
+    const finalAppointment = saved || newAppointment;
+    setAppointments([...appointments, finalAppointment]);
+    alert("Payment successful! Your appointment has been booked. Token: " + finalAppointment.id);
     setText("");
     setResult(null);
     setSlot("");

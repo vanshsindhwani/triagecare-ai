@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { addReminderApi, toggleReminderApi, deleteReminderApi } from "../api";
 
 function Reminders({ user, reminders, setReminders }) {
   const [text, setText] = useState("");
@@ -8,16 +9,23 @@ function Reminders({ user, reminders, setReminders }) {
 
   function addReminder() {
     if (text.trim() === "" || time === "") return;
-    setReminders([...reminders, { id: Date.now(), owner: user.name, text: text, time: time, done: false }]);
+    const newReminder = { id: Date.now(), owner: user.name, text: text, time: time, done: false };
+    addReminderApi(newReminder);
+    setReminders([...reminders, newReminder]);
     setText("");
     setTime("");
   }
 
   function toggleDone(id) {
+    const target = reminders.find((r) => r.id === id);
+    if (target) {
+      toggleReminderApi(id, !target.done);
+    }
     setReminders(reminders.map((r) => (r.id === id ? { ...r, done: !r.done } : r)));
   }
 
   function deleteReminder(id) {
+    deleteReminderApi(id);
     setReminders(reminders.filter((r) => r.id !== id));
   }
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { updateAppointmentStatusApi } from "../api";
 
 function StaffDashboard({ user, appointments, setAppointments }) {
   const [statusFilter, setStatusFilter] = useState("All");
@@ -25,6 +26,7 @@ function StaffDashboard({ user, appointments, setAppointments }) {
   const completedCount = doctorAppointments.filter((a) => a.status === "Completed").length;
 
   function updateStatus(id, newStatus) {
+    updateAppointmentStatusApi(id, newStatus);
     setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: newStatus } : a)));
   }
 

@@ -1,0 +1,95 @@
+{
+  "departments": [
+    {
+      "name": "Cardiology",
+      "doctor": "Dr. Rohit Mehta",
+      "words": [
+        "chest",
+        "heart",
+        "palpitation",
+        "blood pressure",
+        "breathless"
+      ]
+    },
+    {
+      "name": "Pulmonology",
+      "doctor": "Dr. Anita Verma",
+      "words": [
+        "cough",
+        "breath",
+        "wheez",
+        "asthma",
+        "lung"
+      ]
+    },
+    {
+      "name": "Neurology",
+      "doctor": "Dr. Sandeep Kapoor",
+      "words": [
+        "headache",
+        "migraine",
+        "dizz",
+        "seizure",
+        "numb"
+      ]
+    },
+    {
+      "name": "Dermatology",
+      "doctor": "Dr. Neha Arora",
+      "words": [
+        "skin",
+        "rash",
+        "itch",
+        "acne",
+        "allergy"
+      ]
+    },
+    {
+      "name": "Orthopedics",
+      "doctor": "Dr. Vikram Singh",
+      "words": [
+        "bone",
+        "joint",
+        "knee",
+        "back pain",
+        "fracture"
+      ]
+    },
+    {
+      "name": "Gastroenterology",
+      "doctor": "Dr. Pooja Malhotra",
+      "words": [
+        "stomach",
+        "vomit",
+        "nausea",
+        "abdominal",
+        "diarrhea"
+      ]
+    },
+    {
+      "name": "ENT",
+      "doctor": "Dr. Karan Bedi",
+      "words": [
+        "ear",
+        "throat",
+        "nose",
+        "sinus",
+        "hearing"
+      ]
+    },
+    {
+      "name": "General Medicine",
+      "doctor": "Dr. Suresh Gupta",
+      "words": [
+        "fever",
+        "cold",
+        "weakness",
+        "fatigue",
+        "body ache"
+      ]
+    }
+  ],
+  "appointments": [],
+  "vitals": [],
+  "reminders": []
+}

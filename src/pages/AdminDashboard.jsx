@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { addDepartmentApi, deleteDepartmentApi, updateDoctorApi, updateAppointmentStatusApi, resetDatabaseApi } from "../api";
 
 function AdminDashboard({ departments, setDepartments, appointments = [], setAppointments }) {
   const [tab, setTab] = useState("bookings"); // "bookings" or "departments"
@@ -15,24 +16,44 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
   const collected = appointments.filter((a) => a.paid).reduce((sum, a) => sum + (a.fee || 300), 0);
   const highCount = appointments.filter((a) => a.priority === "High").length;
 
+  async function handleClearDatabase() {
+    if (window.confirm("Are you sure you want to clear all appointments, patient records, and reset the database?")) {
+      await resetDatabaseApi();
+      if (setAppointments) setAppointments([]);
+      try {
+        localStorage.removeItem("appointments");
+        localStorage.removeItem("logs");
+        localStorage.removeItem("reminders");
+      } catch (err) {
+        console.warn("Storage cleanup notice:", err);
+      }
+      alert("All hospital records and bookings have been cleared.");
+    }
+  }
+
   function changeDoctor(deptName, newDoctor) {
+    updateDoctorApi(deptName, newDoctor);
     setDepartments(departments.map((d) => (d.name === deptName ? { ...d, doctor: newDoctor } : d)));
   }
 
   function removeDepartment(deptName) {
+    deleteDepartmentApi(deptName);
     setDepartments(departments.filter((d) => d.name !== deptName));
   }
 
   function addDepartment() {
     if (name.trim() === "" || doctor.trim() === "") return;
     const keywords = words.split(",").map((w) => w.trim().toLowerCase()).filter((w) => w !== "");
-    setDepartments([...departments, { name: name.trim(), doctor: doctor.trim(), words: keywords }]);
+    const newDept = { name: name.trim(), doctor: doctor.trim(), words: keywords };
+    addDepartmentApi(newDept);
+    setDepartments([...departments, newDept]);
     setName("");
     setDoctor("");
     setWords("");
   }
 
   function updateBookingStatus(id, newStatus) {
+    updateAppointmentStatusApi(id, newStatus);
     if (setAppointments) {
       setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: newStatus } : a)));
     }
@@ -74,18 +95,26 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
         </div>
       </div>
 
-      <div className="tabs">
+      <div className="tabs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button
+            className={tab === "bookings" ? "active" : ""}
+            onClick={() => setTab("bookings")}
+          >
+            📋 All Bookings & Patient Registry ({appointments.length})
+          </button>
+          <button
+            className={tab === "departments" ? "active" : ""}
+            onClick={() => setTab("departments")}
+          >
+            🏥 Manage Departments & Doctors ({departments.length})
+          </button>
+        </div>
         <button
-          className={tab === "bookings" ? "active" : ""}
-          onClick={() => setTab("bookings")}
+          onClick={handleClearDatabase}
+          style={{ background: "#fee2e2", color: "#b91c1c", border: "1px solid #f87171", padding: "7px 14px", fontSize: "13px" }}
         >
-          📋 All Bookings & Patient Registry ({appointments.length})
-        </button>
-        <button
-          className={tab === "departments" ? "active" : ""}
-          onClick={() => setTab("departments")}
-        >
-          🏥 Manage Departments & Doctors ({departments.length})
+          🗑️ Clear All Records
         </button>
       </div>
 
