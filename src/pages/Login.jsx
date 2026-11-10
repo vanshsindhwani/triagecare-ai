@@ -20,8 +20,18 @@ function Login({ onLogin, departments = [] }) {
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
 
-  // Error State
-  const [errorMsg, setErrorMsg] = useState("");
+  // Field-level errors state
+  const [errors, setErrors] = useState({});
+
+  function clearError(field) {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[field];
+        return copy;
+      });
+    }
+  }
 
   // Countdown timer for Resend OTP
   useEffect(() => {
@@ -38,36 +48,39 @@ function Login({ onLogin, departments = [] }) {
     setRole(newRole);
     setPatientStep("details");
     setOtpCode("");
-    setErrorMsg("");
+    setErrors({});
   }
 
   function handleDeptChange(deptName) {
     setSelectedDept(deptName);
-    setErrorMsg("");
+    clearError("dept");
+    clearError("auth");
   }
 
   // Patient step 1: Validate name and mobile number, then proceed to OTP verification
   function handleSendOtp() {
+    const errs = {};
     const trimmed = patientName.trim();
     if (trimmed === "") {
-      setErrorMsg("Please enter patient or caregiver name.");
-      return;
-    }
-
-    // Reject numbers like 123, pure symbols, or 1-letter entries
-    const validNamePattern = /^[a-zA-Z\s.'-]{2,50}$/;
-    if (!validNamePattern.test(trimmed)) {
-      setErrorMsg("Please enter a valid patient name.");
-      return;
+      errs.name = "Please enter patient full name.";
+    } else {
+      const validNamePattern = /^[a-zA-Z\s.'-]{2,50}$/;
+      if (!validNamePattern.test(trimmed)) {
+        errs.name = "Please enter a valid patient name.";
+      }
     }
 
     const cleanPhone = patientPhone.trim().replace(/\D/g, "");
     if (!cleanPhone || cleanPhone.length !== 10) {
-      setErrorMsg("Please enter a valid 10-digit mobile number.");
+      errs.phone = "Please enter a valid 10-digit mobile number.";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
       return;
     }
 
-    setErrorMsg("");
+    setErrors({});
     setPatientStep("otp");
     setOtpCode("");
     setResendTimer(30);
@@ -77,25 +90,25 @@ function Login({ onLogin, departments = [] }) {
   function handleVerifyOtp() {
     const entered = otpCode.trim();
     if (entered === "") {
-      setErrorMsg("Please enter the 6-digit verification code.");
+      setErrors({ otp: "Please enter the 6-digit verification code." });
       return;
     }
 
     if (entered === "123456") {
-      setErrorMsg("");
+      setErrors({});
       onLogin({
         name: patientName.trim(),
         phone: patientPhone.trim(),
         role: "patient",
       });
     } else {
-      setErrorMsg("Invalid verification code. Please check the OTP sent to your mobile.");
+      setErrors({ otp: "Invalid verification code. Please check the OTP sent to your mobile." });
     }
   }
 
   function handleResendOtp() {
     if (resendTimer > 0) return;
-    setErrorMsg("");
+    setErrors({});
     setResendTimer(30);
   }
 
@@ -111,49 +124,43 @@ function Login({ onLogin, departments = [] }) {
 
   // Authenticate Doctor - strictly only eligible doctors registered by hospital/admin
   function handleDoctorLogin() {
+    const errs = {};
     if (!selectedDept) {
-      setErrorMsg("Please select a medical department.");
-      return;
+      errs.dept = "Please select a medical department.";
     }
     const rawDocName = doctorName.trim();
     if (!rawDocName) {
-      setErrorMsg("Doctor name is required.");
-      return;
+      errs.doctor = "Doctor name is required.";
+    } else {
+      const validDocPattern = /^[a-zA-Z\s.'-]{2,50}$/;
+      if (!validDocPattern.test(cleanDocName(rawDocName))) {
+        errs.doctor = "Please enter a valid doctor name.";
+      }
     }
-    const cleanedEntered = cleanDocName(rawDocName);
-    const validDocPattern = /^[a-zA-Z\s.'-]{2,50}$/;
-    if (!validDocPattern.test(cleanedEntered)) {
-      setErrorMsg("Please enter a valid doctor name.");
+
+    if (!staffId.trim()) {
+      errs.staffId = "Hospital Staff ID is required.";
+    }
+    if (!doctorPassword.trim()) {
+      errs.password = "Doctor password is required.";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
       return;
     }
 
     // Verify doctor against eligible hospital department roster
     const targetDept = departments.find((d) => d.name === selectedDept);
-    if (!targetDept) {
-      setErrorMsg("Selected department is not recognized.");
+    const cleanedEntered = cleanDocName(rawDocName);
+    const registeredCleaned = targetDept ? cleanDocName(targetDept.doctor) : "";
+
+    if (cleanedEntered !== registeredCleaned || doctorPassword.trim() !== "doctor123") {
+      setErrors({ auth: "Access denied: Invalid credentials or unauthorized department access." });
       return;
     }
 
-    const registeredCleaned = cleanDocName(targetDept.doctor);
-    if (cleanedEntered !== registeredCleaned) {
-      setErrorMsg("Access denied: Invalid credentials or unauthorized department access.");
-      return;
-    }
-
-    if (!staffId.trim()) {
-      setErrorMsg("Hospital Staff ID is required.");
-      return;
-    }
-    if (!doctorPassword.trim()) {
-      setErrorMsg("Please enter your doctor password.");
-      return;
-    }
-    if (doctorPassword.trim() !== "doctor123" && doctorPassword.trim() !== "doctor") {
-      setErrorMsg("Invalid password. Please enter your authorized doctor password.");
-      return;
-    }
-
-    setErrorMsg("");
+    setErrors({});
     onLogin({
       name: targetDept.doctor,
       role: "staff",
@@ -165,19 +172,24 @@ function Login({ onLogin, departments = [] }) {
 
   // Authenticate Admin
   function handleAdminLogin() {
+    const errs = {};
     if (!adminUsername.trim()) {
-      setErrorMsg("Administrator username is required.");
-      return;
+      errs.adminUser = "Administrator username is required.";
     }
     if (!adminPassword.trim()) {
-      setErrorMsg("Administrator password is required.");
+      errs.adminPass = "Administrator password is required.";
+    }
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
       return;
     }
-    if (adminUsername.trim().toLowerCase() !== "admin" || (adminPassword !== "admin123" && adminPassword !== "admin")) {
-      setErrorMsg("Invalid administrator credentials. Access denied.");
+
+    if (adminUsername.trim().toLowerCase() !== "admin" || adminPassword !== "admin123") {
+      setErrors({ adminAuth: "Invalid administrator credentials. Access denied." });
       return;
     }
-    setErrorMsg("");
+
+    setErrors({});
     onLogin({
       name: "Hospital Administrator",
       role: "admin",
@@ -209,42 +221,39 @@ function Login({ onLogin, departments = [] }) {
             <option value="admin">Hospital Administrator</option>
           </select>
 
-          {/* Error Message Alert */}
-          {errorMsg && (
-            <div style={{
-              background: "#fee2e2",
-              color: "#b91c1c",
-              padding: "9px 12px",
-              borderRadius: "6px",
-              fontSize: "13px",
-              marginBottom: "14px",
-              border: "1px solid #fecaca",
-            }}>
-              {errorMsg}
-            </div>
-          )}
-
           {/* PATIENT LOGIN FLOW - STEP 1: NAME & PHONE */}
           {role === "patient" && patientStep === "details" && (
             <>
               <label>Patient Name</label>
               <input
                 value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
+                onChange={(e) => {
+                  setPatientName(e.target.value);
+                  clearError("name");
+                }}
                 placeholder="Patient full name"
+                style={{
+                  borderColor: errors.name ? "#dc2626" : undefined,
+                  marginBottom: errors.name ? "4px" : "14px",
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
               />
+              {errors.name && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.name}
+                </div>
+              )}
 
               <label>Mobile Number</label>
               <div style={{
                 display: "flex",
                 alignItems: "stretch",
-                margin: "6px 0 14px",
+                margin: errors.phone ? "6px 0 4px" : "6px 0 14px",
               }}>
                 <span style={{
                   background: "#e8f5f2",
                   color: "#0b5d56",
-                  border: "1.5px solid #c9d6d3",
+                  border: errors.phone ? "1.5px solid #dc2626" : "1.5px solid #c9d6d3",
                   borderRight: "none",
                   borderRadius: "8px 0 0 8px",
                   padding: "10px 14px",
@@ -260,16 +269,25 @@ function Login({ onLogin, departments = [] }) {
                   type="tel"
                   maxLength={10}
                   value={patientPhone}
-                  onChange={(e) => setPatientPhone(e.target.value.replace(/\D/g, ""))}
+                  onChange={(e) => {
+                    setPatientPhone(e.target.value.replace(/\D/g, ""));
+                    clearError("phone");
+                  }}
                   placeholder="10-digit mobile number"
                   style={{
                     borderRadius: "0 8px 8px 0",
+                    borderColor: errors.phone ? "#dc2626" : undefined,
                     margin: 0,
                     width: "100%",
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
                 />
               </div>
+              {errors.phone && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.phone}
+                </div>
+              )}
 
               <div style={{ marginTop: "16px" }}>
                 <button type="button" onClick={handleSendOtp} style={{ width: "100%" }}>
@@ -299,7 +317,10 @@ function Login({ onLogin, departments = [] }) {
                 type="text"
                 maxLength={6}
                 value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => {
+                  setOtpCode(e.target.value.replace(/\D/g, ""));
+                  clearError("otp");
+                }}
                 placeholder="------"
                 style={{
                   textAlign: "center",
@@ -307,10 +328,17 @@ function Login({ onLogin, departments = [] }) {
                   fontSize: "22px",
                   fontWeight: "700",
                   padding: "12px",
+                  borderColor: errors.otp ? "#dc2626" : undefined,
+                  marginBottom: errors.otp ? "4px" : "14px",
                 }}
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
               />
+              {errors.otp && (
+                <div style={{ color: "#dc2626", fontSize: "12px", textAlign: "center", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.otp}
+                </div>
+              )}
 
               <div style={{ marginTop: "14px" }}>
                 <button type="button" onClick={handleVerifyOtp} style={{ width: "100%" }}>
@@ -329,7 +357,7 @@ function Login({ onLogin, departments = [] }) {
                   type="button"
                   onClick={() => {
                     setPatientStep("details");
-                    setErrorMsg("");
+                    setErrors({});
                   }}
                   style={{
                     background: "transparent",
@@ -366,7 +394,14 @@ function Login({ onLogin, departments = [] }) {
           {role === "staff" && (
             <>
               <label>Department / Specialty</label>
-              <select value={selectedDept} onChange={(e) => handleDeptChange(e.target.value)}>
+              <select
+                value={selectedDept}
+                onChange={(e) => handleDeptChange(e.target.value)}
+                style={{
+                  borderColor: errors.dept ? "#dc2626" : undefined,
+                  marginBottom: errors.dept ? "4px" : "14px",
+                }}
+              >
                 <option value="">-- Select Department / Specialty --</option>
                 {departments.map((d) => (
                   <option key={d.name} value={d.name}>
@@ -374,30 +409,88 @@ function Login({ onLogin, departments = [] }) {
                   </option>
                 ))}
               </select>
+              {errors.dept && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.dept}
+                </div>
+              )}
 
               <label>Doctor Name</label>
               <input
                 value={doctorName}
-                onChange={(e) => setDoctorName(e.target.value)}
+                onChange={(e) => {
+                  setDoctorName(e.target.value);
+                  clearError("doctor");
+                  clearError("auth");
+                }}
                 placeholder="Doctor name"
+                style={{
+                  borderColor: errors.doctor ? "#dc2626" : undefined,
+                  marginBottom: errors.doctor ? "4px" : "14px",
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleDoctorLogin()}
               />
+              {errors.doctor && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.doctor}
+                </div>
+              )}
 
               <label>Hospital Staff ID</label>
               <input
                 value={staffId}
-                onChange={(e) => setStaffId(e.target.value)}
+                onChange={(e) => {
+                  setStaffId(e.target.value);
+                  clearError("staffId");
+                  clearError("auth");
+                }}
                 placeholder="Hospital staff ID"
+                style={{
+                  borderColor: errors.staffId ? "#dc2626" : undefined,
+                  marginBottom: errors.staffId ? "4px" : "14px",
+                }}
               />
+              {errors.staffId && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.staffId}
+                </div>
+              )}
 
               <label>Security Password</label>
               <input
                 type="password"
                 value={doctorPassword}
-                onChange={(e) => setDoctorPassword(e.target.value)}
+                onChange={(e) => {
+                  setDoctorPassword(e.target.value);
+                  clearError("password");
+                  clearError("auth");
+                }}
                 placeholder="Enter password"
+                style={{
+                  borderColor: errors.password ? "#dc2626" : undefined,
+                  marginBottom: errors.password ? "4px" : "14px",
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleDoctorLogin()}
               />
+              {errors.password && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.password}
+                </div>
+              )}
+
+              {errors.auth && (
+                <div style={{
+                  background: "#fee2e2",
+                  color: "#b91c1c",
+                  padding: "9px 12px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  marginBottom: "12px",
+                  border: "1px solid #fecaca",
+                }}>
+                  {errors.auth}
+                </div>
+              )}
 
               <div style={{ marginTop: "16px" }}>
                 <button type="button" onClick={handleDoctorLogin} style={{ width: "100%" }}>
@@ -413,18 +506,58 @@ function Login({ onLogin, departments = [] }) {
               <label>Administrator Username</label>
               <input
                 value={adminUsername}
-                onChange={(e) => setAdminUsername(e.target.value)}
+                onChange={(e) => {
+                  setAdminUsername(e.target.value);
+                  clearError("adminUser");
+                  clearError("adminAuth");
+                }}
                 placeholder="Enter admin username"
+                style={{
+                  borderColor: errors.adminUser ? "#dc2626" : undefined,
+                  marginBottom: errors.adminUser ? "4px" : "14px",
+                }}
               />
+              {errors.adminUser && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.adminUser}
+                </div>
+              )}
 
               <label>Administrator Password</label>
               <input
                 type="password"
                 value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
+                onChange={(e) => {
+                  setAdminPassword(e.target.value);
+                  clearError("adminPass");
+                  clearError("adminAuth");
+                }}
                 placeholder="Enter admin password"
+                style={{
+                  borderColor: errors.adminPass ? "#dc2626" : undefined,
+                  marginBottom: errors.adminPass ? "4px" : "14px",
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
               />
+              {errors.adminPass && (
+                <div style={{ color: "#dc2626", fontSize: "12px", marginBottom: "12px", marginTop: "-2px" }}>
+                  {errors.adminPass}
+                </div>
+              )}
+
+              {errors.adminAuth && (
+                <div style={{
+                  background: "#fee2e2",
+                  color: "#b91c1c",
+                  padding: "9px 12px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  marginBottom: "12px",
+                  border: "1px solid #fecaca",
+                }}>
+                  {errors.adminAuth}
+                </div>
+              )}
 
               <div style={{ marginTop: "16px" }}>
                 <button type="button" onClick={handleAdminLogin} style={{ width: "100%" }}>
