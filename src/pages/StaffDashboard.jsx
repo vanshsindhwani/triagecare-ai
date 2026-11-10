@@ -32,40 +32,50 @@ function StaffDashboard({ user, appointments, setAppointments }) {
 
   return (
     <div>
-      <div className="card" style={{ background: "#f0fdf4", borderColor: "#bbf7d0", marginBottom: "16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+      <div className="card" style={{ marginBottom: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
           <div>
-            <h3 style={{ margin: "0 0 4px", color: "#166534", borderBottom: "none", paddingBottom: 0 }}>
-              👨‍⚕️ {user?.name || "Doctor"} — {doctorDept ? `${doctorDept} Specialist` : "Doctor Portal"}
-            </h3>
-            <p style={{ margin: 0, fontSize: "13px", color: "#15803d" }}>
-              🔒 <b>Patient Privacy Active:</b> You are viewing patient records triaged exclusively to <b>{doctorDept || "your specialty"}</b>.
-            </p>
+            <h2 style={{ margin: 0, fontSize: "20px", color: "#0f766e", fontWeight: "700" }}>
+              {doctorDept ? `${doctorDept} Specialist Clinic` : "Specialist Clinic"}
+            </h2>
+            <div style={{ marginTop: "4px", fontSize: "13px", color: "#64748b" }}>
+              Attending Specialist: <b>{user?.name || "Specialist"}</b> {user?.staffId ? `• Staff ID: ${user.staffId}` : ""}
+            </div>
           </div>
-          <span style={{ background: "#dcfce7", color: "#166534", padding: "6px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: "600" }}>
-            Dept: {doctorDept}
-          </span>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{
+              background: "#e6f4f1",
+              color: "#0f766e",
+              padding: "6px 14px",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: "600",
+              border: "1px solid #cce8e2",
+            }}>
+              {doctorDept || "Clinical Service"}
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="stats">
         <div className="stat">
           <h1>{doctorAppointments.length}</h1>
-          My {doctorDept ? `${doctorDept} ` : ""}Patients
+          Assigned Patients
         </div>
         <div className="stat">
           <h1 style={{ color: highCount > 0 ? "#dc2626" : undefined }}>{highCount}</h1>
-          High Priority
+          High Urgency Cases
         </div>
         <div className="stat">
           <h1 style={{ color: "#15803d" }}>{completedCount}</h1>
-          Consulted
+          Completed Consultations
         </div>
       </div>
 
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
-          <h3 style={{ margin: 0, paddingBottom: 0, borderBottom: "none" }}>Assigned Patient Roster</h3>
+          <h3 style={{ margin: 0, paddingBottom: 0, borderBottom: "none" }}>Department Consultation Queue</h3>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
             <input
               type="text"

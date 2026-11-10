@@ -32,18 +32,18 @@ function Reminders({ user, reminders, setReminders }) {
   return (
     <div className="grid2">
       <div className="card">
-        <h3>Add Reminder</h3>
-        <label>What to remember</label>
+        <h3>Schedule Medication Reminder</h3>
+        <label>Medication / Clinical Task</label>
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Medication or health task" />
-        <label>Time</label>
+        <label>Scheduled Time</label>
         <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-        <button onClick={addReminder}>Add</button>
-        <p className="muted">A popup will appear at the set time while this page is open.</p>
+        <button onClick={addReminder}>Save Reminder</button>
+        <p className="muted">Active patient alert notifications trigger automatically at the scheduled time.</p>
       </div>
 
       <div className="card">
-        <h3>My Reminders</h3>
-        {mine.length === 0 ? <p className="muted">No reminders.</p> : (
+        <h3>Active Medication Schedule</h3>
+        {mine.length === 0 ? <p className="muted">No active medication reminders scheduled.</p> : (
           <table>
             <tbody>
               {mine.map((r) => (

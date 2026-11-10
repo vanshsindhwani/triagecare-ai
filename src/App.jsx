@@ -94,8 +94,12 @@ function App() {
           <div className="navbar">
             <h2>TriageCare AI</h2>
             <div>
-              <span style={{ marginRight: "12px", fontWeight: "500" }}>
-                {user.name} {user.department ? `(${user.department})` : `(${user.role})`}
+              <span style={{ marginRight: "16px", fontWeight: "500", fontSize: "14px", opacity: 0.95 }}>
+                {user.role === "admin"
+                  ? "Hospital Administration"
+                  : user.department
+                  ? `${user.name} • ${user.department}`
+                  : user.name}
               </span>
               <button onClick={() => setUser(null)}>Logout</button>
             </div>

@@ -22,17 +22,17 @@ function HealthTracker({ user, logs, setLogs }) {
   return (
     <div className="grid2">
       <div className="card">
-        <h3>Add Reading</h3>
-        <label>Type</label>
+        <h3>Log Health Vital</h3>
+        <label>Vital Metric</label>
         <select value={type} onChange={(e) => setType(e.target.value)}>
           {Object.keys(units).map((u) => <option key={u}>{u}</option>)}
         </select>
-        <label>Value ({units[type]})</label>
-        <input type="number" value={value} onChange={(e) => setValue(e.target.value)} />
-        <button onClick={addLog}>Save</button>
+        <label>Measurement ({units[type]})</label>
+        <input type="number" value={value} onChange={(e) => setValue(e.target.value)} placeholder={`Enter value in ${units[type]}`} />
+        <button onClick={addLog}>Record Vital</button>
 
-        <h4>Last readings - {type}</h4>
-        {typeLogs.length === 0 ? <p className="muted">No readings yet.</p> : (
+        <h4>Recent Trend — {type}</h4>
+        {typeLogs.length === 0 ? <p className="muted">No readings recorded yet.</p> : (
           <div className="bars">
             {typeLogs.map((l) => (
               <div key={l.id} className="bar" style={{ height: (Number(l.value) / maxValue) * 100 + "%" }}>
@@ -44,8 +44,8 @@ function HealthTracker({ user, logs, setLogs }) {
       </div>
 
       <div className="card">
-        <h3>History</h3>
-        {myLogs.length === 0 ? <p className="muted">Nothing recorded.</p> : (
+        <h3>Vital Records History</h3>
+        {myLogs.length === 0 ? <p className="muted">No vital readings recorded yet.</p> : (
           <table>
             <thead><tr><th>Date</th><th>Type</th><th>Value</th></tr></thead>
             <tbody>

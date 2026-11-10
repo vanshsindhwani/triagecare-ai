@@ -10,10 +10,10 @@ function PatientDashboard(props) {
   return (
     <div>
       <div className="tabs">
-        <button className={tab === "symptoms" ? "active" : ""} onClick={() => setTab("symptoms")}>Check Symptoms</button>
-        <button className={tab === "appointments" ? "active" : ""} onClick={() => setTab("appointments")}>My Appointments</button>
-        <button className={tab === "health" ? "active" : ""} onClick={() => setTab("health")}>Health Tracker</button>
-        <button className={tab === "reminders" ? "active" : ""} onClick={() => setTab("reminders")}>Reminders</button>
+        <button className={tab === "symptoms" ? "active" : ""} onClick={() => setTab("symptoms")}>Symptom Triage</button>
+        <button className={tab === "appointments" ? "active" : ""} onClick={() => setTab("appointments")}>My Appointments ({myAppointments.length})</button>
+        <button className={tab === "health" ? "active" : ""} onClick={() => setTab("health")}>Vitals & Health Tracker</button>
+        <button className={tab === "reminders" ? "active" : ""} onClick={() => setTab("reminders")}>Medication Reminders</button>
       </div>
 
       {tab === "symptoms" && (

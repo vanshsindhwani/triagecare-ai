@@ -50,35 +50,70 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
   return (
     <div className="grid2">
       <div className="card">
-        <h3>Describe your problem</h3>
-        <textarea rows="5" value={text} onChange={(e) => setText(e.target.value)}
-          placeholder="Describe your symptoms or health concern..." />
-        <button onClick={checkSymptoms}>Find Department</button>
+        <h3>Clinical Symptom Intake</h3>
+        <textarea
+          rows="5"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Describe your symptoms or health concern..."
+        />
+        <button onClick={checkSymptoms}>Triage Symptoms</button>
       </div>
 
       <div className="card">
-        <h3>Suggested Department</h3>
+        <h3>Triage Assessment & Allocation</h3>
         {!result ? (
-          <p className="muted">Enter your symptoms and click "Find Department".</p>
+          <p className="muted">Enter your symptoms and click "Triage Symptoms".</p>
         ) : (
           <div>
             <div className="result">
-              <b>{result.department}</b> - {result.doctor}
-              <br />Priority: <span className={result.priority}>{result.priority}</span>
-              {result.matched.length > 0 && <div className="muted">Matched words: {result.matched.join(", ")}</div>}
+              <div style={{ fontSize: "16px", fontWeight: "700", color: "#0b5d56" }}>
+                {result.department}
+              </div>
+              <div style={{ fontSize: "14px", marginTop: "2px", color: "#334155" }}>
+                Assigned Specialist: <b>{result.doctor}</b>
+              </div>
+              <div style={{ marginTop: "6px", fontSize: "13px" }}>
+                Triage Urgency: <span className={result.priority}>{result.priority}</span>
+              </div>
+              {result.matched.length > 0 && (
+                <div className="muted" style={{ marginTop: "6px", fontSize: "12px" }}>
+                  Clinical Indicators: {result.matched.join(", ")}
+                </div>
+              )}
             </div>
 
-            <b>Choose a time slot</b>
+            <b>Select Consultation Slot</b>
             <div className="slots">
               {slots.map((s) => (
-                <button key={s} disabled={taken.includes(s)} className={slot === s ? "selected" : ""}
-                  onClick={() => setSlot(s)}>{s}</button>
+                <button
+                  key={s}
+                  disabled={taken.includes(s)}
+                  className={slot === s ? "selected" : ""}
+                  onClick={() => setSlot(s)}
+                >
+                  {s}
+                </button>
               ))}
             </div>
 
-            <b>Consultation Fee: Rs. {FEE}</b>
-            <input value={card} onChange={(e) => setCard(e.target.value)} placeholder="Card number or UPI ID" />
-            <button disabled={slot === "" || card.trim() === ""} onClick={payAndBook}>Pay & Book Appointment</button>
+            <div style={{ marginTop: "14px" }}>
+              <div style={{ fontSize: "14px", fontWeight: "600", marginBottom: "6px", color: "#1e293b" }}>
+                Consultation Fee: Rs. {FEE}
+              </div>
+              <input
+                value={card}
+                onChange={(e) => setCard(e.target.value)}
+                placeholder="UPI ID or Payment Card Number"
+              />
+              <button
+                disabled={slot === "" || card.trim() === ""}
+                onClick={payAndBook}
+                style={{ width: "100%", marginTop: "6px" }}
+              >
+                Confirm Booking & Payment
+              </button>
+            </div>
           </div>
         )}
       </div>

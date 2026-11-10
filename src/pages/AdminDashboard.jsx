@@ -104,27 +104,27 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
             className={tab === "bookings" ? "active" : ""}
             onClick={() => setTab("bookings")}
           >
-            📋 All Bookings & Patient Registry ({appointments.length})
+            Patient Registry & Intake Records ({appointments.length})
           </button>
           <button
             className={tab === "departments" ? "active" : ""}
             onClick={() => setTab("departments")}
           >
-            🏥 Manage Departments & Doctors ({departments.length})
+            Clinical Departments & Specialists ({departments.length})
           </button>
         </div>
         <button
           onClick={handleClearDatabase}
           style={{ background: "#fee2e2", color: "#b91c1c", border: "1px solid #f87171", padding: "7px 14px", fontSize: "13px" }}
         >
-          🗑️ Clear All Records
+          Reset All Records
         </button>
       </div>
 
       {tab === "bookings" && (
         <div className="card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
-            <h3 style={{ margin: 0, paddingBottom: 0, borderBottom: "none" }}>Hospital Patient Intake & Booking Records</h3>
+            <h3 style={{ margin: 0, paddingBottom: 0, borderBottom: "none" }}>Hospital Patient Intake & Appointment Registry</h3>
             <span className="muted" style={{ fontSize: "13px" }}>
               Showing {filteredBookings.length} of {appointments.length} records
             </span>

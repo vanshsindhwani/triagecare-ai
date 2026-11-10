@@ -200,12 +200,12 @@ function Login({ onLogin, departments = [] }) {
     <div className="login-page">
       <div className="login-left">
         <h1>TriageCare AI</h1>
-        <p>AI-Powered Clinical Patient Portal & Semantic Symptom Triage System.</p>
+        <p>Intelligent Clinical Intake & Semantic Symptom Triage Portal</p>
         <ul>
-          <li>Patient intake and free-text symptom triage</li>
-          <li>Semantic clinical department and doctor routing</li>
-          <li>Dedicated specialist dashboard with patient privacy protection</li>
-          <li>Real-time appointment scheduling and vitals monitoring</li>
+          <li>Free-text symptom intake with automated department routing</li>
+          <li>Clinical urgency assessment and specialist queuing</li>
+          <li>Dedicated specialist dashboard with isolated department rosters</li>
+          <li>Appointment scheduling, patient records, and vitals monitoring</li>
         </ul>
       </div>
 
