@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# AI Studio system artifacts & metadata
+.aistudio
+.aistudio/*
+
+# Data stores & runtime files
+data_store.json
+*.db
+*.sqlite
