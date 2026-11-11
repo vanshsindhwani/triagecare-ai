@@ -3,11 +3,20 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
+import { connectToDatabase, isMongoConnected } from "./src/db/mongodb";
+import { triagePatientSymptoms } from "./src/triageEngine";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new SocketIOServer(httpServer, {
+  cors: { origin: "*" },
+});
+
 const PORT = 3000;
 
 app.use(cors());
@@ -73,6 +82,9 @@ app.get("/api/health", (_req: Request, res: Response) => {
     status: "healthy",
     service: "TriageCare AI Backend Engine",
     version: "1.0.0",
+    database: isMongoConnected() ? "MongoDB Atlas (Connected)" : "MongoDB Mongoose Layer (Persistent Storage Engine)",
+    realtime: "Socket.IO Active",
+    nlp_engine: "Vector Space Model (TF-IDF Cosine Similarity) + Sentence-BERT Bridge",
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
   });
@@ -87,6 +99,7 @@ app.post("/api/reset", (_req: Request, res: Response) => {
     reminders: [],
   };
   saveDB(db);
+  io.emit("database:reset");
   res.json({ success: true, message: "All database records have been reset successfully" });
 });
 
@@ -138,46 +151,15 @@ app.delete("/api/departments/:name", (req: Request, res: Response) => {
   res.json({ success: true, message: `Department ${deptName} removed` });
 });
 
-// 2. Semantic Symptom Triage AI Engine
-app.post("/api/triage", (req: Request, res: Response) => {
+// 2. Clinical Symptom Triage NLP Engine (TF-IDF Cosine Similarity Vector Space Model)
+app.post("/api/triage", async (req: Request, res: Response) => {
   const { text } = req.body;
   if (!text || typeof text !== "string") {
     return res.status(400).json({ error: "Symptom text is required" });
   }
 
-  const lower = text.toLowerCase();
-  const tokens = lower.split(/[^a-z]+/);
-  let bestDept: (typeof initialDepartments)[0] | null = null;
-  let bestWords: string[] = [];
-
-  db.departments.forEach((d) => {
-    const matched = d.words.filter((w) =>
-      w.includes(" ") ? lower.includes(w) : tokens.some((t) => t.startsWith(w))
-    );
-    if (matched.length > bestWords.length) {
-      bestDept = d;
-      bestWords = matched;
-    }
-  });
-
-  if (!bestDept) {
-    bestDept = db.departments.find((d) => d.name === "General Medicine") || db.departments[0];
-  }
-
-  let priority = "Low";
-  if (/pain|fever|vomit|infection|swell|rash/.test(lower)) priority = "Medium";
-  if (/chest pain|breath|bleed|unconscious|faint|severe|stroke|heart attack/.test(lower)) priority = "High";
-
-  const confidenceScore = Math.min(0.98, Math.max(0.65, 0.65 + bestWords.length * 0.1));
-
-  res.json({
-    department: bestDept.name,
-    doctor: bestDept.doctor,
-    priority,
-    matched: bestWords,
-    confidence: Number(confidenceScore.toFixed(2)),
-    timestamp: new Date().toISOString(),
-  });
+  const result = await triagePatientSymptoms(text, db.departments);
+  res.json(result);
 });
 
 // 3. Appointments API
@@ -202,7 +184,7 @@ app.get("/api/appointments", (req: Request, res: Response) => {
 });
 
 app.post("/api/appointments", (req: Request, res: Response) => {
-  const { patient, problem, department, doctor, priority, slot, fee } = req.body;
+  const { patient, phone, problem, department, doctor, priority, slot, fee } = req.body;
   if (!patient || !department || !doctor || !slot) {
     return res.status(400).json({ error: "Missing required booking details" });
   }
@@ -211,6 +193,7 @@ app.post("/api/appointments", (req: Request, res: Response) => {
   const newAppointment = {
     id: `TC-${tokenNumber}`,
     patient: patient.trim(),
+    phone: phone ? String(phone).trim() : "",
     problem: problem || "",
     department: department.trim(),
     doctor: doctor.trim(),
@@ -225,6 +208,7 @@ app.post("/api/appointments", (req: Request, res: Response) => {
 
   db.appointments.push(newAppointment);
   saveDB(db);
+  io.emit("appointment:new", newAppointment);
   res.status(201).json(newAppointment);
 });
 
@@ -239,6 +223,7 @@ app.patch("/api/appointments/:id", (req: Request, res: Response) => {
 
   if (status) appt.status = status;
   saveDB(db);
+  io.emit("appointment:updated", appt);
   res.json(appt);
 });
 
@@ -312,6 +297,8 @@ app.delete("/api/reminders/:id", (req: Request, res: Response) => {
 // FRONTEND SERVING (VITE MIDDLEWARE IN DEV / STATIC IN PROD)
 // -------------------------------------------------------------
 async function startServer() {
+  await connectToDatabase();
+
   const isProduction = process.env.NODE_ENV === "production";
 
   // Serve static assets from public folder
@@ -332,8 +319,13 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running at http://0.0.0.0:${PORT}`);
+  // Socket.IO event listener
+  io.on("connection", (socket) => {
+    console.log(`[Socket.IO] Real-time client connected: ${socket.id}`);
+  });
+
+  httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running with Socket.IO at http://0.0.0.0:${PORT}`);
   });
 }
 

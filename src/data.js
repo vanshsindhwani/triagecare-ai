@@ -11,8 +11,7 @@ export const defaultDepartments = [
 ];
 
 
-// simple version of the triage. Later we can replace this with a call to the
-// Python (Sentence-BERT) service, e.g. fetch("http://localhost:8000/triage", ...)
+// Client-side fallback symptom triage calculation
 export function findDepartment(text, departments) {
   const lower = text.toLowerCase();
   const tokens = lower.split(/[^a-z]+/);

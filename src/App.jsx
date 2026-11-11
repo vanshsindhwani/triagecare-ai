@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 import Login from "./pages/Login";
 import PatientDashboard from "./pages/PatientDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
@@ -27,6 +28,33 @@ function App() {
     getAppointmentsApi({}, []).then((apiAppts) => {
       if (apiAppts && Array.isArray(apiAppts)) setAppointments(apiAppts);
     });
+  }, []);
+
+  // Real-time synchronization via Socket.IO WebSockets
+  useEffect(() => {
+    const socket = io();
+
+    socket.on("appointment:new", (newAppt) => {
+      setAppointments((prev) => {
+        if (prev.some((a) => a.id === newAppt.id)) return prev;
+        return [...prev, newAppt];
+      });
+    });
+
+    socket.on("appointment:updated", (updatedAppt) => {
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === updatedAppt.id ? updatedAppt : a))
+      );
+    });
+
+    socket.on("database:reset", () => {
+      setAppointments([]);
+      setDepartments(defaultDepartments);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   // save everything in localStorage whenever it changes
