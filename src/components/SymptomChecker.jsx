@@ -11,11 +11,22 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
   const [slot, setSlot] = useState("");
   const [card, setCard] = useState("");
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   async function checkSymptoms() {
-    if (text.trim() === "") return;
+    if (text.trim() === "") {
+      setErrorMsg("Please enter a description of your health concern.");
+      return;
+    }
+    setErrorMsg("");
     const triage = await triageSymptomsApi(text, findDepartment, departments);
-    setResult(triage);
-    setSlot("");
+    if (triage.error) {
+      setErrorMsg(triage.error);
+      setResult(null);
+    } else {
+      setResult(triage);
+      setSlot("");
+    }
   }
 
   // slots already booked for this department
@@ -54,9 +65,18 @@ function SymptomChecker({ user, departments, appointments, setAppointments }) {
         <textarea
           rows="5"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            if (errorMsg) setErrorMsg("");
+          }}
           placeholder="Describe your symptoms or health concern..."
+          style={{ borderColor: errorMsg ? "#dc2626" : undefined }}
         />
+        {errorMsg && (
+          <div style={{ color: "#dc2626", fontSize: "13px", marginBottom: "12px", marginTop: "-4px" }}>
+            {errorMsg}
+          </div>
+        )}
         <button onClick={checkSymptoms}>Triage Symptoms</button>
       </div>
 

@@ -90,8 +90,20 @@ app.get("/api/health", (_req: Request, res: Response) => {
   });
 });
 
-// Reset / Clear all records
-app.post("/api/reset", (_req: Request, res: Response) => {
+// Reset / Clear all records (Protected: requires admin authorization token or password)
+app.post("/api/reset", (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  const adminSecret = req.body?.adminSecret;
+
+  // Verify Admin authorization
+  if (
+    authHeader !== "Bearer admin123" &&
+    adminSecret !== "admin123" &&
+    process.env.NODE_ENV === "production"
+  ) {
+    return res.status(401).json({ error: "Unauthorized: Admin authorization required to reset database." });
+  }
+
   db = {
     departments: initialDepartments,
     appointments: [],
@@ -159,6 +171,10 @@ app.post("/api/triage", async (req: Request, res: Response) => {
   }
 
   const result = await triagePatientSymptoms(text, db.departments);
+  if (result.error) {
+    return res.status(400).json({ error: result.error });
+  }
+
   res.json(result);
 });
 

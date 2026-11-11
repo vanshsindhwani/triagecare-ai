@@ -13,6 +13,14 @@ export const defaultDepartments = [
 
 // Client-side fallback symptom triage calculation
 export function findDepartment(text, departments) {
+  const trimmed = text.trim();
+  const alphaChars = trimmed.replace(/[^a-zA-Z]/g, "").length;
+  const digits = trimmed.replace(/[^0-9]/g, "").length;
+
+  if (!trimmed || alphaChars < 3 || digits > alphaChars) {
+    return { error: "Invalid symptom input. Please describe your health concern using valid words." };
+  }
+
   const lower = text.toLowerCase();
   const tokens = lower.split(/[^a-z]+/);
   let best = null;

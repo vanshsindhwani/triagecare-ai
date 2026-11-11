@@ -1,6 +1,5 @@
 // Clinical Symptom Triage NLP Engine
-// Implements Vector Space Model (TF-IDF) & Cosine Similarity matching
-// Provides optional integration bridge to external Python Sentence-BERT microservice
+// Implements Vector Space Model (TF-IDF), Cosine Similarity, Negation Handling, and Input Validation
 
 interface DepartmentProfile {
   name: string;
@@ -9,13 +8,14 @@ interface DepartmentProfile {
 }
 
 export interface TriageResult {
-  department: string;
-  doctor: string;
-  priority: "High" | "Medium" | "Low";
-  matched: string[];
-  confidence: number;
-  engine: "TF-IDF Cosine Similarity" | "Sentence-BERT Semantic Service";
-  timestamp: string;
+  error?: string;
+  department?: string;
+  doctor?: string;
+  priority?: "High" | "Medium" | "Low";
+  matched?: string[];
+  confidence?: number;
+  engine?: "TF-IDF Cosine Similarity" | "Sentence-BERT Semantic Service";
+  timestamp?: string;
 }
 
 const STOP_WORDS = new Set([
@@ -24,16 +24,62 @@ const STOP_WORDS = new Set([
   "some", "from", "very", "having", "since", "yesterday", "days", "day", "severe"
 ]);
 
-// Extract meaningful n-grams and unigrams
+const NEGATION_WORDS = new Set([
+  "no", "not", "without", "never", "dont", "don't", "denies", "denied", "free of", "zero"
+]);
+
+// Extract tokenized words
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+    .filter((w) => w.length >= 2 && !STOP_WORDS.has(w));
 }
 
-// Calculate Cosine Similarity between two term-frequency maps
+// Negation-aware clinical priority assessment
+function assessUrgency(text: string): "High" | "Medium" | "Low" {
+  const lower = text.toLowerCase();
+
+  // Split into sentences / clauses
+  const clauses = lower.split(/[,.;!?]|\bbut\b|\bhowever\b/);
+
+  let highDetected = false;
+  let mediumDetected = false;
+
+  const highIndicators = [
+    "chest pain", "shortness of breath", "breathless", "difficulty breathing",
+    "unconscious", "faint", "fainted", "seizure", "stroke", "heart attack",
+    "severe bleeding", "unresponsive", "paralysis", "sudden numbness", "high fever with rash"
+  ];
+
+  const mediumIndicators = [
+    "pain", "fever", "vomit", "vomiting", "infection", "swelling", "fracture",
+    "migraine", "diarrhea", "dizziness", "burning", "asthma attack"
+  ];
+
+  for (const clause of clauses) {
+    const tokens = clause.trim().split(/\s+/);
+    
+    // Check if clause has a negation word preceding the indicator
+    const hasNegation = tokens.some((t) => NEGATION_WORDS.has(t));
+
+    if (!hasNegation) {
+      if (highIndicators.some((hi) => clause.includes(hi))) {
+        highDetected = true;
+      }
+      if (mediumIndicators.some((mi) => clause.includes(mi))) {
+        mediumDetected = true;
+      }
+    }
+  }
+
+  if (highDetected) return "High";
+  if (mediumDetected) return "Medium";
+  return "Low";
+}
+
+// Calculate Cosine Similarity with Negation Filtering
 function cosineSimilarity(queryTerms: string[], docWords: string[], allDocCount: number, termDocFreq: Map<string, number>): { score: number; matched: string[] } {
   const queryFreq: Record<string, number> = {};
   queryTerms.forEach((t) => {
@@ -45,7 +91,6 @@ function cosineSimilarity(queryTerms: string[], docWords: string[], allDocCount:
 
   docWords.forEach((dw) => {
     const dwLower = dw.toLowerCase();
-    // Check direct word or sub-phrase match
     if (queryTerms.includes(dwLower) || queryTerms.some((qt) => qt.startsWith(dwLower) || dwLower.startsWith(qt))) {
       matchedWords.push(dw);
       docFreq[dwLower] = 1;
@@ -56,7 +101,6 @@ function cosineSimilarity(queryTerms: string[], docWords: string[], allDocCount:
     return { score: 0, matched: [] };
   }
 
-  // Calculate TF-IDF weighted dot product
   let dotProduct = 0;
   let normQuery = 0;
   let normDoc = 0;
@@ -83,35 +127,30 @@ function cosineSimilarity(queryTerms: string[], docWords: string[], allDocCount:
   }
 
   const rawScore = dotProduct / (Math.sqrt(normQuery) * Math.sqrt(normDoc));
-  // Bound score realistically between 0.40 and 0.96 for detected matches
   const calibratedScore = Math.min(0.96, Math.max(0.45, rawScore));
   return { score: Number(calibratedScore.toFixed(2)), matched: matchedWords };
 }
 
-// Determine Clinical Urgency Priority
-function assessUrgency(text: string): "High" | "Medium" | "Low" {
-  const lower = text.toLowerCase();
-
-  // High urgency red-flag clinical conditions
-  const highIndicators = [
-    "chest pain", "shortness of breath", "breathless", "difficulty breathing",
-    "unconscious", "faint", "fainted", "seizure", "stroke", "heart attack",
-    "severe bleeding", "unresponsive", "paralysis", "sudden numbness", "high fever with rash"
-  ];
-  if (highIndicators.some((hi) => lower.includes(hi))) {
-    return "High";
+// Input Validation for Gibberish/Random Numbers
+export function validateSymptomInput(text: string): { valid: boolean; reason?: string } {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length < 3) {
+    return { valid: false, reason: "Please enter a detailed description of your symptoms." };
   }
 
-  // Medium urgency clinical conditions
-  const mediumIndicators = [
-    "pain", "fever", "vomit", "vomiting", "infection", "swelling", "fracture",
-    "migraine", "diarrhea", "dizziness", "severe", "burning", "asthma attack"
-  ];
-  if (mediumIndicators.some((mi) => lower.includes(mi))) {
-    return "Medium";
+  // Reject pure numbers or gibberish strings like "12 3243er"
+  const alphaChars = trimmed.replace(/[^a-zA-Z]/g, "").length;
+  if (alphaChars < 3) {
+    return { valid: false, reason: "Invalid input. Please enter valid medical symptoms using letters." };
   }
 
-  return "Low";
+  // Check dictionary letter ratio vs digits/symbols
+  const digits = trimmed.replace(/[^0-9]/g, "").length;
+  if (digits > alphaChars) {
+    return { valid: false, reason: "Invalid symptom input. Please describe your health concern using text." };
+  }
+
+  return { valid: true };
 }
 
 // Primary Triage Execution Function
@@ -119,14 +158,20 @@ export async function triagePatientSymptoms(
   text: string,
   departments: DepartmentProfile[]
 ): Promise<TriageResult> {
+  // Validate input
+  const validation = validateSymptomInput(text);
+  if (!validation.valid) {
+    return { error: validation.reason };
+  }
+
   const urgency = assessUrgency(text);
 
-  // Check if an external Sentence-BERT service is running (configured in environment)
+  // External Sentence-BERT bridge
   const sentenceBertUrl = process.env.SENTENCE_BERT_URL;
   if (sentenceBertUrl) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s fast timeout
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
       const response = await fetch(`${sentenceBertUrl}/triage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,15 +192,14 @@ export async function triagePatientSymptoms(
         };
       }
     } catch {
-      // Gracefully fall through to internal TF-IDF Cosine Similarity engine
+      // Fall through to TF-IDF Cosine Similarity Engine
     }
   }
 
-  // Internal Mathematical NLP Vector Engine (TF-IDF Cosine Similarity)
+  // Internal TF-IDF Cosine Similarity Engine
   const tokens = tokenize(text);
   const totalDepts = departments.length;
 
-  // Build document frequency map
   const termDocFreq = new Map<string, number>();
   departments.forEach((dept) => {
     dept.words.forEach((w) => {

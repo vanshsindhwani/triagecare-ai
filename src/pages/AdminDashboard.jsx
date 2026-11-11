@@ -17,18 +17,16 @@ function AdminDashboard({ departments, setDepartments, appointments = [], setApp
   const highCount = appointments.filter((a) => a.priority === "High").length;
 
   async function handleClearDatabase() {
-    if (window.confirm("Are you sure you want to clear all appointments, patient records, and reset the database?")) {
-      await resetDatabaseApi();
-      if (setAppointments) setAppointments([]);
-      try {
-        localStorage.removeItem("appointments");
-        localStorage.removeItem("logs");
-        localStorage.removeItem("reminders");
-      } catch (err) {
-        console.warn("Storage cleanup notice:", err);
-      }
-      alert("All hospital records and bookings have been cleared.");
+    await resetDatabaseApi();
+    if (setAppointments) setAppointments([]);
+    try {
+      localStorage.removeItem("appointments");
+      localStorage.removeItem("logs");
+      localStorage.removeItem("reminders");
+    } catch (err) {
+      console.warn("Storage cleanup notice:", err);
     }
+    alert("All hospital records and bookings have been reset successfully.");
   }
 
   function changeDoctor(deptName, newDoctor) {

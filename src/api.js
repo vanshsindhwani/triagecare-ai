@@ -13,7 +13,14 @@ export async function fetchHealth() {
 
 export async function resetDatabaseApi() {
   try {
-    const res = await fetch(`${BASE_URL}/reset`, { method: "POST" });
+    const res = await fetch(`${BASE_URL}/reset`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer admin123"
+      },
+      body: JSON.stringify({ adminSecret: "admin123" })
+    });
     if (res.ok) return await res.json();
   } catch (err) {
     console.warn("Error calling reset API:", err);
@@ -80,7 +87,13 @@ export async function triageSymptomsApi(text, fallbackFn, fallbackDepts) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
-    if (res.ok) return await res.json();
+    const data = await res.json();
+    if (res.ok) {
+      return data;
+    }
+    if (data && data.error) {
+      return { error: data.error };
+    }
   } catch (e) {
     console.warn("Error calling triage API, falling back to local analysis:", e);
   }
